@@ -1,4 +1,4 @@
-# Exercise #12: File Renaming Utility
+# Exercise #12: File Renaming Tool
 
 [![topic: filepath-package](https://img.shields.io/badge/topic-filepath%20package-green.svg?style=flat-square)](https://github.com/search?q=topic%3Afilepath-package+org%3Agophercises&type=Repositories)
 [![topic: os-package](https://img.shields.io/badge/topic-os%20package-green.svg?style=flat-square)](https://github.com/search?q=topic%3Aos-package+org%3Agophercises&type=Repositories)
