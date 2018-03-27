@@ -1,6 +1,6 @@
 # Exercise #12: File Renaming Tool
 
-[![exercise status: in progress](https://img.shields.io/badge/exercise%20status-in%20progress-yellow.svg?style=for-the-badge)](https://gophercises.com/exercises/renamer)
+[![exercise status: released](https://img.shields.io/badge/exercise%20status-released-green.svg?style=for-the-badge)](https://gophercises.com/exercises/renamer)
 
 ## Exercise details
 
