@@ -1,55 +1,63 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
 
-type file struct {
-	name string
-	path string
-}
-
 func main() {
-	dir := "sample"
-	var toRename []file
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	var dry bool
+	flag.BoolVar(&dry, "dry", true, "whether or not this should be a real or dry run")
+	flag.Parse()
+
+	walkDir := "sample"
+	toRename := make(map[string][]string)
+	filepath.Walk(walkDir, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
-		if _, err := match(info.Name()); err == nil {
-			toRename = append(toRename, file{
-				name: info.Name(),
-				path: path,
-			})
+		curDir := filepath.Dir(path)
+
+		if m, err := match(info.Name()); err == nil {
+			key := filepath.Join(curDir, fmt.Sprintf("%s.%s", m.base, m.ext))
+			toRename[key] = append(toRename[key], info.Name())
 		}
 		return nil
 	})
-	for _, f := range toRename {
-		fmt.Printf("%q\n", f)
-	}
-	for _, orig := range toRename {
-		var n file
-		var err error
-		n.name, err = match(orig.name)
-		if err != nil {
-			fmt.Println("Error matching:", orig.path, err.Error())
+	for key, files := range toRename {
+		dir := filepath.Dir(key)
+		n := len(files)
+		sort.Strings(files)
+		for i, filename := range files {
+			res, _ := match(filename)
+			newFilename := fmt.Sprintf("%s - %d of %d.%s", res.base, (i + 1), n, res.ext)
+			oldPath := filepath.Join(dir, filename)
+			newPath := filepath.Join(dir, newFilename)
+			fmt.Printf("mv %s => %s\n", oldPath, newPath)
+			if !dry {
+				err := os.Rename(oldPath, newPath)
+				if err != nil {
+					fmt.Println("Error renaming:", oldPath, newPath, err.Error())
+				}
+			}
 		}
-		n.path = filepath.Join(dir, n.name)
-		fmt.Printf("mv %s => %s\n", orig.path, n.path)
-		err = os.Rename(orig.path, n.path)
-		if err != nil {
-			fmt.Println("Error renaming:", orig.path, err.Error())
-		}
 	}
+}
+
+type matchResult struct {
+	base  string
+	index int
+	ext   string
 }
 
 // match returns the new file name, or an error if the file name
 // didn't match our pattern.
-func match(filename string) (string, error) {
+func match(filename string) (*matchResult, error) {
 	// "birthday", "001", "txt"
 	pieces := strings.Split(filename, ".")
 	ext := pieces[len(pieces)-1]
@@ -58,8 +66,7 @@ func match(filename string) (string, error) {
 	name := strings.Join(pieces[0:len(pieces)-1], "_")
 	number, err := strconv.Atoi(pieces[len(pieces)-1])
 	if err != nil {
-		return "", fmt.Errorf("%s didn't match our pattern", filename)
+		return nil, fmt.Errorf("%s didn't match our pattern", filename)
 	}
-	// Birthday - 1.txt
-	return fmt.Sprintf("%s - %d.%s", strings.Title(name), number, ext), nil
+	return &matchResult{strings.Title(name), number, ext}, nil
 }
