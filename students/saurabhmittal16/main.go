@@ -21,17 +21,17 @@ func extractKeyVal(path string) (bool, string, string) {
 }
 
 func mapPaths(path string, names *map[string][]string) error {
-	err := filepath.Walk(path, func(pt string, info os.FileInfo, err error) error {
+	err := filepath.Walk(path, func(currPath string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Printf("Error while waling %q: %v\n", pt, err)
+			fmt.Printf("Error while waling %q: %v\n", currPath, err)
 			return err
 		}
 
-		if pt == path {
+		if currPath == path {
 			return nil
 		}
 
-		valid, key, value := extractKeyVal(pt)
+		valid, key, value := extractKeyVal(currPath)
 		if valid {
 			use := *names
 			if use[key] == nil {
@@ -62,15 +62,17 @@ func main() {
 
 	mapPaths(*dirPath, &names)
 
-	for k, v := range names {
-		tot := len(v)
+	for key, paths := range names {
+		total := len(paths)
 
-		for i, p := range v {
-			oldPath := k + sep + p
-			ext := filepath.Ext(p)
-			pathSuffix := fmt.Sprintf(" (%d of %d)", i+1, tot)
-			newPath := k + pathSuffix + ext
+		for i, path := range paths {
+			extension := filepath.Ext(path)
+			pathSuffix := fmt.Sprintf(" (%d of %d)", i+1, total)
+
+			oldPath := key + sep + path
+			newPath := key + pathSuffix + extension
 			err := os.Rename(oldPath, newPath)
+
 			if err != nil {
 				log.Fatal(err)
 			}
